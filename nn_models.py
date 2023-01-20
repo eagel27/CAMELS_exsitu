@@ -48,8 +48,10 @@ def build_cnn_model(input_shape):
     :return: The compiled model
     """
 
-    dense_init = tf.keras.initializers.TruncatedNormal()
-    conv_init = tf.keras.initializers.GlorotUniform(seed=None)
+    dense_init = tf.keras.initializers.RandomNormal(mean=0.0,
+                                                    stddev=0.2,
+                                                    seed=None)
+    conv_init = dense_init
 
     input_layer = Input(shape=input_shape)
     x = Conv2D(32, (5, 5), activation='relu',
