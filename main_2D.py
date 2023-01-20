@@ -22,11 +22,11 @@ model = build_cnn_model((128, 128, 5))
 model_id = 0
 
 # Create directories for saving the model weights and the results
-model_path = 'Saved_models'
+model_path = 'Saved_models/2D'
 if not os.path.exists(model_path):
     os.makedirs(model_path)
 
-results_path = 'Results'
+results_path = 'Results/2D'
 if not os.path.exists(results_path):
     os.makedirs(results_path)
 

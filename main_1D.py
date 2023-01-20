@@ -29,11 +29,11 @@ model = build_model(train_set.shape[1])
 model_id = 0
 
 # Create directories for saving the model weights and the results
-model_path = 'Saved_models_1D'
+model_path = 'Saved_models/1D'
 if not os.path.exists(model_path):
     os.makedirs(model_path)
 
-results_path = 'Results_1D'
+results_path = 'Results/1D'
 if not os.path.exists(results_path):
     os.makedirs(results_path)
 
