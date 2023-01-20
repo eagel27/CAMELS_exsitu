@@ -1,66 +1,16 @@
 import os
-import numpy as np
-import matplotlib.pyplot as plt
-
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from constants import BATCHES
 from nn_data import input_fn_split, get_num_examples, get_data
 from nn_models import *
-
-
-def load_ds(mode, dataset_str):
-    """
-    Load the respective dataset by taking into account which channels to ignore
-    and outside which mask radius to mask
-    :param mode: 'train' or 'test' or 'validation'
-    :param dataset_str: The dataset string identifying which dataset to load
-    :return:
-    """
-    return input_fn_split(mode, dataset_str)
-
-
-def get_predictions(test_set, model):
-    """
-    Load predictions from the trained model.
-    The model predicts a distribution
-    The mean value can be the model predicted ex-situ
-    The std of the distribution corresponds to the uncertainty
-    of the model on the prediction (error bar)
-    """
-    y_pred_distr = model(test_set)
-    Y_pred = y_pred_distr.mean().numpy().reshape(-1)
-    Y_pred_samples = y_pred_distr.sample(1000)
-    y_std = y_pred_distr.stddev().numpy().reshape(-1)
-    return Y_pred_samples, Y_pred, y_std
-
-
-def plot_predictions(test_set_y, y_pred, y_std, test_sim, train_sim,
-                     model_id, results_path):
-    """
-    Plot the 1-1 relation between the true values of ex-situ and
-    the predicted values from the model.
-    For that we will use the unseen by the model test set and
-    we will plot 128 random galaxies from there.
-    """
-    plt.figure(figsize=(5, 5))
-    plt.title('MLP trained on {}'.format(train_sim))
-    plt.errorbar(test_set_y[:128], y_pred[:128],
-                 yerr=y_std[:128], linestyle="None", fmt='o',
-                capsize=3, color='blue', capthick=0.5)
-    plt.plot(np.arange(0, 1.1, 0.1), np.arange(0, 1.1, 0.1), 'k--')
-    plt.xlim(0, 1)
-    plt.ylim(-0.1, 1.1)
-    plt.ylabel('Predictions', fontsize=14)
-    plt.xlabel('True Values', fontsize=14)
-    plt.savefig('{}/{}_on_{}_model_{}'.format(results_path, train_sim,
-                                              test_sim, model_id))
+from utils import plot_predictions, get_predictions
 
 
 # Load datasets
 dataset_str = 'tng_dataset'
-ds_train = load_ds('train', dataset_str=dataset_str)
-ds_val = load_ds('validation', dataset_str=dataset_str)
-ds_test = load_ds('test', dataset_str=dataset_str)
+ds_train = input_fn_split('train', dataset_str=dataset_str)
+ds_val = input_fn_split('validation', dataset_str=dataset_str)
+ds_test = input_fn_split('test', dataset_str=dataset_str)
 
 len_ds_train = get_num_examples('train', dataset_str=dataset_str)
 len_ds_val = get_num_examples('validation', dataset_str=dataset_str)
@@ -68,7 +18,7 @@ len_ds_test = get_num_examples('test', dataset_str=dataset_str)
 print(len_ds_train, len_ds_val, len_ds_test)
 
 # Build the CNN model
-model = build_cnn_model(ds_train.shape)
+model = build_cnn_model((128, 128, 5))
 model_id = 0
 
 # Create directories for saving the model weights and the results
@@ -95,6 +45,10 @@ history = model.fit(ds_train,
                     validation_data=ds_val,
                     callbacks=[es, mc],
                     use_multiprocessing=True, workers=4)
+
+# Save the model weights to the specified path
+# This way you can reload it later if you are satisfied with the training
+model.save_weights(model_file_path)
 
 # Evaluate model
 images, y_true = get_data(ds_test, batches=8)
